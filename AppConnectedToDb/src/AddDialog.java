@@ -1,0 +1,88 @@
+import javax.swing.*;
+import java.awt.event.*;
+import java.sql.SQLException;
+
+public class AddDialog extends JDialog {
+    private JPanel contentPane;
+    private JButton buttonOK;
+    private JButton buttonCancel;
+    private JLabel firstNameLabel;
+    private JTextField firstNameTextField;
+    private JTextField lastNameTextField;
+    private JCheckBox maleCheckBox;
+    private JCheckBox femaleCheckBox;
+    private JTextField FieldTextField;
+    private JTextField yearTextField;
+    private JLabel sexLabel;
+    private JLabel yearLabel;
+    private JLabel fieldLabel;
+    private JLabel lastNameLabel;
+    private JPanel PanelWithComponents;
+    private JPanel MainPanel;
+
+    public AddDialog() {
+        setContentPane(contentPane);
+        setModal(true);
+        getRootPane().setDefaultButton(buttonOK);
+
+        buttonOK.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                try {
+                    onOK();
+                } catch (SQLException ex) {
+                    ex.printStackTrace();
+                }
+            }
+        });
+
+        buttonCancel.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                onCancel();
+            }
+        });
+
+        // call onCancel() when cross is clicked
+        setDefaultCloseOperation(DO_NOTHING_ON_CLOSE);
+        addWindowListener(new WindowAdapter() {
+            public void windowClosing(WindowEvent e) {
+                onCancel();
+            }
+        });
+
+        // call onCancel() on ESCAPE
+        contentPane.registerKeyboardAction(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                onCancel();
+            }
+        }, KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0), JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
+    }
+
+    private void onOK() throws SQLException {
+
+
+        if (maleCheckBox.isSelected()) {
+            Person personToAdd = new Person(firstNameTextField.getText(), lastNameTextField.getText(), FieldTextField.getText(), Integer.parseInt(yearTextField.getText()), "Male");
+            GUI.addPerson(personToAdd);
+        } else {
+            Person personToAdd = new Person(firstNameTextField.getText(), lastNameTextField.getText(), FieldTextField.getText(), Integer.parseInt(yearTextField.getText()), "Female");
+            GUI.addPerson(personToAdd);
+        }
+        dispose();
+    }
+
+    private void onCancel() {
+        // add your code here if necessary
+        dispose();
+    }
+
+    public static void main(String[] args) {
+        AddDialog dialog = new AddDialog();
+        dialog.pack();
+        dialog.setVisible(true);
+        System.exit(0);
+    }
+
+    private void createUIComponents() {
+        // TODO: place custom component creation code here
+    }
+}
