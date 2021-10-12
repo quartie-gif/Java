@@ -1,6 +1,7 @@
 import javax.swing.*;
 import java.awt.event.*;
 import java.sql.SQLException;
+import java.util.ArrayList;
 
 public class AddDialog extends JDialog {
     private JPanel contentPane;
@@ -59,23 +60,29 @@ public class AddDialog extends JDialog {
 
     private void onOK() throws SQLException {
 
+        ArrayList<String> personToAdd = new ArrayList<>();
+        personToAdd.add(firstNameTextField.getText());
+        personToAdd.add(lastNameTextField.getText());
+        personToAdd.add(FieldTextField.getText());
+        personToAdd.add(String.valueOf(Integer.parseInt(yearTextField.getText())));
 
         if (maleCheckBox.isSelected()) {
-            Person personToAdd = new Person(firstNameTextField.getText(), lastNameTextField.getText(), FieldTextField.getText(), Integer.parseInt(yearTextField.getText()), "Male");
-            GUI.addPerson(personToAdd);
+
+            personToAdd.add("Male");
+
         } else {
-            Person personToAdd = new Person(firstNameTextField.getText(), lastNameTextField.getText(), FieldTextField.getText(), Integer.parseInt(yearTextField.getText()), "Female");
-            GUI.addPerson(personToAdd);
+            personToAdd.add("Female");
         }
+        GUI.addPerson(personToAdd);
         dispose();
     }
 
     private void onCancel() {
-        // add your code here if necessary
         dispose();
     }
 
     public static void main(String[] args) {
+
         AddDialog dialog = new AddDialog();
         dialog.pack();
         dialog.setVisible(true);

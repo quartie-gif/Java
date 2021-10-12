@@ -7,6 +7,7 @@ import java.awt.event.ActionListener;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.sql.SQLException;
+import java.util.ArrayList;
 
 
 public class GUI extends JFrame {
@@ -32,21 +33,20 @@ public class GUI extends JFrame {
 
         model = new DefaultTableModel();
 
-        table.setFillsViewportHeight(true);
-        String[] header = new String[]{"First Name", "Last Name", "Field of Study",
-                "Year", "Sex"};
 
-        model.setColumnIdentifiers(header);
-        model.fireTableDataChanged();
+        table.setFillsViewportHeight(true);
+
+        db.addColumns(model);
 
         //Scroll Panel
         JScrollPane scrollPane = new JScrollPane(table);
         this.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         this.setContentPane(mainPanel);
 
-        JPanel dashboard = new JPanel();
 
-        //Dashboard's layout
+
+        //Dashboard
+        JPanel dashboard = new JPanel();
         dashboard.setLayout(new GridBagLayout());
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.gridwidth = GridBagConstraints.REMAINDER;
@@ -55,47 +55,48 @@ public class GUI extends JFrame {
         //Adding buttons
         dashboard.add(addButton, gbc);
         dashboard.add(deleteRecords, gbc);
+        dashboard.add(editButton, gbc);
         dashboard.add(deleteRowButton, gbc);
 
         //Centering buttons
         dashboard.setAlignmentY(Component.CENTER_ALIGNMENT);
 
+        //Top panel
         JPanel topPanel = new JPanel();
         topPanel.add(searchLabel);
         searchTextField.setColumns(10);
         topPanel.add(searchTextField);
 
-
-
-
-
+        //Bottom panel
         JPanel bottomPanel = new JPanel();
         bottomPanel.add(exitButton);
         bottomPanel.add(infoButton);
 
         table.setModel(model);
 
-
+        //Main panel
         mainPanel.setLayout(new BorderLayout());
         mainPanel.add(bottomPanel, BorderLayout.SOUTH);
         mainPanel.add(dashboard, BorderLayout.EAST);
         mainPanel.add(topPanel, BorderLayout.NORTH);
         mainPanel.add(scrollPane);
         mainPanel.setBorder(BorderFactory.createEmptyBorder(0, 10, 0,0));
-        //Loading records from Database
+
+        //Loading records from the database
         db.loadRecords();
 
         this.pack();
 
+        // ------------------------------------------ METHODS --------------------------------------------------------
         //Listeners
         addButton.addActionListener(new ActionListener() {
             /**
              * Provides functionality for add button
              *
-             * @param e the event to be processed
+             * @param actionEvent the event to be processed
              */
             @Override
-            public void actionPerformed(ActionEvent e) {
+            public void actionPerformed(ActionEvent actionEvent) {
                 dialog = new AddDialog();
                 dialog.pack();
                 dialog.setVisible(true);
@@ -106,10 +107,10 @@ public class GUI extends JFrame {
             /**
              * Provides functionality for exit button
              *
-             * @param e the event to be processed
+             * @param actionEvent the event to be processed
              */
             @Override
-            public void actionPerformed(ActionEvent e) {
+            public void actionPerformed(ActionEvent actionEvent) {
                 System.exit(0);
             }
         });
@@ -117,23 +118,21 @@ public class GUI extends JFrame {
             /**
              * Provides functionality for info button
              *
-             * @param e the event to be processed
+             * @param actionEvent the event to be processed
              */
             @Override
-            public void actionPerformed(ActionEvent e) {
+            public void actionPerformed(ActionEvent actionEvent) {
                 if (!table.getSelectionModel().isSelectionEmpty()) {
 
-                    String data = "First Name: " + table.getValueAt(table.getSelectedRow(), 0) +
-                            "\nSecond name: " + table.getValueAt(table.getSelectedRow(), 1) +
-                            "\nField of Study: " + table.getValueAt(table.getSelectedRow(), 2) +
-                            "\nYear: " + table.getValueAt(table.getSelectedRow(), 3) +
-                            "\nSex: " + table.getValueAt(table.getSelectedRow(), 4);
+                    StringBuilder message = new StringBuilder();
+
+                    for (int i = 0; i< DataBase.columnCount; i++) {
+                        message.append(table.getColumnName(i)).append(" ").append(table.getValueAt(table.getSelectedRow(), i)).append("\n");
+                    }
 
                     // Message pops up
-                    JOptionPane.showMessageDialog(null, data, "Client details", JOptionPane.PLAIN_MESSAGE);
+                    JOptionPane.showMessageDialog(null, message.toString(), "Client details", JOptionPane.PLAIN_MESSAGE);
                 }
-
-
             }
         });
 
@@ -141,10 +140,10 @@ public class GUI extends JFrame {
             /**
              * Invoked when an action occurs.
              *
-             * @param e the event to be processed
+             * @param actionEvent the event to be processed
              */
             @Override
-            public void actionPerformed(ActionEvent e) {
+            public void actionPerformed(ActionEvent actionEvent) {
                 try {
                     db.deleteRecords();
                     model.setRowCount(0);
@@ -165,20 +164,46 @@ public class GUI extends JFrame {
                 filer(searchTextField.getText());
             }
         });
+        deleteRowButton.addActionListener(new ActionListener() {
+            /**
+             * Invoked when an action occurs.
+             *
+             * @param actionEvent the event to be processed
+             */
+            @Override
+            public void actionPerformed(ActionEvent actionEvent) {
+                int row = table.getSelectedRow();
+                String selected = model.getValueAt(row, 0).toString();
+                try {
+                    db.deleteRow(selected);
+                    model.removeRow(row);
+                    model.fireTableDataChanged();
+                } catch (SQLException ex) {
+                    ex.printStackTrace();
+                }
+            }
+        });
     }
 
+    /**
+     * Filtering records
+     * */
     public void filer(String query)
     {
-        TableRowSorter<DefaultTableModel> tr = new TableRowSorter<DefaultTableModel>(model);
+        TableRowSorter<DefaultTableModel> tr = new TableRowSorter<>(model);
         table.setRowSorter(tr);
 
         tr.setRowFilter(RowFilter.regexFilter(query));
     }
 
-    public static void addPerson(Person person) throws SQLException {
-        model.addRow(new Object[]{person.firstName, person.lastName, person.fieldOfStudy, person.year, person.sex});
+    /**
+     * Adding person to database
+     * */
+    public static void addPerson(ArrayList<String> person) throws SQLException {
 
-        db.insert(person.firstName, person.lastName, person.fieldOfStudy, person.year, person.sex);
+        db.insert(person);
+        model.addRow(person.toArray());
+
         model.fireTableDataChanged();
 
     }

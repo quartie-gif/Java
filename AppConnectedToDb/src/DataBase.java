@@ -1,4 +1,6 @@
+import javax.swing.table.DefaultTableModel;
 import java.sql.*;
+import java.util.ArrayList;
 import java.util.Arrays;
 
 class DataBase {
@@ -7,6 +9,7 @@ class DataBase {
     private static String username = "";
     private static boolean initialized = true;
     static Connection con;
+    static int columnCount;
 
 
     public Connection connect() {
@@ -28,7 +31,6 @@ class DataBase {
     public void loadRecords() throws SQLException {
 
         con = connect();
-        System.out.println(con);
 
         Statement stmt = con.createStatement();
         ResultSet rs = stmt.executeQuery("select * from users");
@@ -41,8 +43,6 @@ class DataBase {
             String year = String.valueOf(rs.getInt("Year"));
             String sex = rs.getString("Sex");
             String[] tbData = {firstName, lastName, fieldOfStudy, year, sex};
-
-            System.out.println("Records Exist " + Arrays.toString(tbData));
 
             GUI.model.addRow(tbData);
             GUI.model.fireTableDataChanged();
@@ -57,9 +57,18 @@ class DataBase {
     //4) public void commit(): saves the changes made since the previous commit/rollback permanent.
     //5) public void rollback(): Drops all changes made since the previous commit/rollback.
     //6) public void close(): closes the connection and Releases a JDBC resources immediately.
-    public void insert(String f1, String f2, String f3, int f4, String f5) throws SQLException {
+    public void insert(ArrayList<String> person ) throws SQLException {
         con = connect();
-        PreparedStatement prep = con.prepareStatement("INSERT INTO users VALUES('" + f1 + "','" + f2 + "', '" + f3 + "', '" + f4 + "', '" + f5 + "')");
+
+        StringBuilder str = new StringBuilder("INSERT INTO users VALUES ('");
+
+        int count=0;
+        while (person.size()-1 > count) {
+            str.append(person.get(count)).append("','");
+            count++;
+        }
+        str.append(person.get(count)).append("');");
+        PreparedStatement prep = con.prepareStatement(str.toString());
         prep.executeUpdate();
         con.close();
     }
@@ -68,6 +77,40 @@ class DataBase {
         con = connect();
         PreparedStatement prep = con.prepareStatement("DELETE FROM users;");
         prep.executeUpdate();
+        con.close();
+    }
+
+    public void deleteRow(String selected) throws SQLException{
+        con = connect();
+        PreparedStatement prep = con.prepareStatement("DELETE FROM users WHERE FirstName='"+selected+"' ");
+        prep.executeUpdate();
+        con.close();
+    }
+
+    public void addColumns(DefaultTableModel model) throws SQLException {
+
+        con = connect();
+
+
+        ArrayList<String> cols = new ArrayList<>();
+
+        Statement statement = con.createStatement();
+
+        ResultSet results = statement.executeQuery("SELECT * FROM users");
+
+        ResultSetMetaData metadata = results.getMetaData();
+
+        columnCount = metadata.getColumnCount();
+
+        for (int i=1; i<=columnCount; i++) {
+
+            String columnName = metadata.getColumnName(i);
+
+            cols.add(columnName);
+
+        }
+        model.setColumnIdentifiers(cols.toArray());
+        model.fireTableDataChanged();
         con.close();
     }
 
